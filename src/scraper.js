@@ -1,5 +1,8 @@
 import cheerio from 'cheerio'
 
+const oneMinute = 60000
+const oneDay = 86400000
+
 const cheerioOptions = {
   normalizeWhitespace: true
 }
@@ -7,6 +10,32 @@ const cheerioOptions = {
 function getIdFromHref (href) {
   const parts = href.split('/')
   return parseInt(parts[parts.length - 1])
+}
+
+function distanceObjectFromString (distanceString) {
+  const parts = distanceString.split(' ')
+
+  return {
+    distance: parseFloat(parts[0]),
+    unit: parts[1],
+    raw: distanceString,
+    toString: () => distanceString
+  }
+}
+
+function timeStringToDate (timeString) {
+  const parts = timeString.split(' ')
+  const value = parseInt(parts[0])
+  const unit = parts[1]
+  const now = Date.now()
+
+  if (unit === 'days') {
+    return new Date(now - (value * oneDay))
+  } else if (unit === 'mins') {
+    return new Date(now - (value * oneMinute))
+  } else {
+    throw new Error(`Unexpected unit '${unit}' when trying to parse time '${timeString}'`)
+  }
 }
 
 function toInt (numberString, allowNaN = true) {
@@ -20,17 +49,18 @@ function toInt (numberString, allowNaN = true) {
   return intValue
 }
 
-export function extractCommodityLocationFromHtml (html) {
+function extractCommodityLocationFromTable (tableId, html) {
   const p = cheerio.load(html, cheerioOptions)
 
   const locations = []
 
-  p('#closestListingTable tbody tr').each((_, e) => {
+  p(`${tableId} tbody tr`).each((_, e) => {
     const $columns = p(e).children('td')
 
     const $nameParent = $columns.eq(0)
     const $nameEl = $nameParent.find('a')
     const stationName = $nameEl.text()
+
     const stationId = getIdFromHref($nameEl.attr('href'))
 
     const isPlanetary = $nameParent.find('i.icon-planet').length > 0
@@ -54,13 +84,21 @@ export function extractCommodityLocationFromHtml (html) {
       price: toInt($columns.eq(2).text(), false),
       amount: toInt($columns.eq(4).text(), false),
       padSize: $columns.eq(5).find('.number').text(),
-      lastUpdate: $columns.eq(6).find('.number').text(),
-      stationDistance: toInt($columns.eq(7).find('.number').text()),
-      systemDistance: toInt($columns.eq(8).find('.number').text())
+      lastUpdate: timeStringToDate($columns.eq(6).find('.number').text()),
+      stationDistance: distanceObjectFromString($columns.eq(7).find('.number').text()),
+      systemDistance: distanceObjectFromString($columns.eq(8).find('.number').text())
     })
   })
 
   return locations
+}
+
+export function extractTopSellingLocationsFromHtml (html) {
+  return extractCommodityLocationFromTable('#table-stations-max-sell', html)
+}
+
+export function extractCommodityLocationsFromHtml (html) {
+  return extractCommodityLocationFromTable('#closestListingTable', html)
 }
 
 export function extractCommoditiesFromHtml (html) {

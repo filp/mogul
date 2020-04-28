@@ -4,7 +4,7 @@ Barebones client for Elite Dangerous commodity information, through [eddb.io](ht
 
 ---
 
-## methods
+## Available methods:
 
 By example:
 
@@ -19,43 +19,45 @@ async function myMethod () {
   
   // Check if we got a hit
   if (system.match) {
-    // Find all available commodities:
+    // Get a list of all commodities:
     const commodities = await client.getCommodities()
 
-    // Find 'Low Temperature Diamonds', and get its id:
-    const ltd = commodities.find(commodity => commodity.name === 'Low Temperature Diamonds')
+    // Or filter the list to find a commodity by name:
+    const ltd = await client.getCommodities('Low Temperature Diamonds')
 
     // Find the stations close to Tiolce buying Low Temperature Diamonds
     const commodityId = ltd.id
     const systemId = system.match.id
 
-    const results = await client.findClosestSystemToSell(ltd.id, system.match.id)
+    const closest = await client.findClosestSystemToSell(ltd.id, system.match.id)
 
-    console.log(results)
+    console.log(closest)
     // => Results in something like: 
     // [
-    //   {
-    //     station: { id: 63129, name: 'Black Hide', isPlanetary: true },
-    //     system: { id: 19341, name: 'Wyrd' },
-    //     price: 441,
-    //     amount: 2,
-    //     padSize: 'L',
-    //     lastUpdate: '21 mins',
-    //     stationDistance: 9,
-    //     systemDistance: 75
-    //   },
     //   {
     //     station: { id: 48885, name: 'Cortes Base', isPlanetary: true },
     //     system: { id: 3318, name: "Ch'iang Fei" },
     //     price: 437,
     //     amount: 15,
     //     padSize: 'L',
-    //     lastUpdate: '487 days',
-    //     stationDistance: 19,
-    //     systemDistance: 92
+    //     lastUpdate: 2019-01-19T18:58:10.615Z,
+    //     stationDistance: {
+    //       distance: 46,
+    //       unit: 'ls',
+    //       raw: '46 ls'
+    //     },
+    //     systemDistance: {
+    //       distance: 92,
+    //       unit: 'ly',
+    //       raw: '92 ly'
+    //     }
     //   },
     //   ...
     // ]
+
+    // You can also look for the top place to sell a commodity:
+    const bestSell = await client.findTopSystemToSell(ltd.id)
+
   } else {
     throw new Error('Could not find a system with that name')
   }

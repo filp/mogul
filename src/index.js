@@ -1,7 +1,7 @@
 import axios from 'axios'
 import qs from 'querystring'
 import camelcaseKeys from 'camelcase-keys'
-import { extractCommoditiesFromHtml, extractCommodityLocationFromHtml } from './scraper'
+import { extractCommoditiesFromHtml, extractCommodityLocationsFromHtml, extractTopSellingLocationsFromHtml } from './scraper'
 
 const axiosOptions = {
   baseURL: 'https://eddb.io/',
@@ -26,7 +26,7 @@ async function getCommodityRoute (api, operationCode, commodityId, systemId, add
   })
 
   const result = await api.post('/route/closest', qs.stringify(args))
-  return extractCommodityLocationFromHtml(result.data)
+  return extractCommodityLocationsFromHtml(result.data)
 }
 
 function commodityRouteParams (options = {}) {
@@ -47,6 +47,11 @@ export function createClient (options = {}) {
   const client = {
     options,
     axiosInstance: api,
+
+    async findTopSystemToSell (commodityId) {
+      const commodityPage = await api.get(`/commodity/${commodityId}`)
+      return extractTopSellingLocationsFromHtml(commodityPage.data)
+    },
 
     async findClosestSystemToSell (commodityId, systemId, additionalOptions = {}) {
       return getCommodityRoute(api, COMMODITY_OP_SELL, commodityId, systemId, additionalOptions)
@@ -71,11 +76,18 @@ export function createClient (options = {}) {
       }
     },
 
-    async getCommodities () {
+    async getCommodities (filterByName = null) {
       const commoditiesPage = await api.get('/commodity')
-      return extractCommoditiesFromHtml(commoditiesPage.data)
+      const commodities = extractCommoditiesFromHtml(commoditiesPage.data)
+
+      if (filterByName) {
+        return commodities.find(c => c.name === filterByName)
+      }
+
+      return commodities
     }
   }
 
   return client
 }
+

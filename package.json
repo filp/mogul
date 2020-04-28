@@ -1,0 +1,24 @@
+{
+  "private": true,
+  "name": "mogul",
+  "description": "Unofficial client for eddb.io",
+  "keywords": ["elite", "dangerous", "api"],
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "babel-node src/index.js",
+    "build": "babel src/ --out-dir=dist/",
+    "prepublish": "npm run build"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.9.0",
+    "@babel/node": "^7.8.7",
+    "@babel/preset-env": "^7.9.5",
+    "standard": "^14.3.3"
+  },
+  "dependencies": {
+    "axios": "^0.19.2",
+    "camelcase-keys": "^6.2.2",
+    "cheerio": "^1.0.0-rc.3"
+  }
+}
